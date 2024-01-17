@@ -1,0 +1,41 @@
+name: code041/docker_publish
+description: 'Docker publishing action'
+author: Felipe Luiz Bill
+branding:
+  icon: "activity"
+  color: "blue"
+
+inputs:
+  token:
+    description: GitHub token with read and write privileges over organization packages
+    required: true
+  registry:
+    description: Docker registry location
+    required: true
+  image_name:
+    description: Image name
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - name: Code checkout
+      uses: actions/checkout@v4
+    - name: Log in to the Container registry
+      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+      with:
+        images: ${{ inputs.registry }}/${{ inputs.image_name }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
